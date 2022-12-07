@@ -1,0 +1,7 @@
+== useful links ==
+
+[POST] login: https://altadefinizionecommunity.online/api/login -> json
+[POST] register: https://altadefinizionecommunity.online/api/register -> json
+    - requests json: {"email":"","password":"","password_confirmation":"","fingerprint":1117459144040421,"selected_plan":1} 
+[GET] new-domain: https://altadefinizione-nuovo.click/ -> html
+
