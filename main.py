@@ -114,10 +114,18 @@ class AltadefinizioneExploit:
         print(f'\n {film_name} downloaded')
 
     def generate_account(self): # just in case, it's useful to have
+        try: os.mkdir('ACCOUNTS')
+        except: pass
         new_user = self.register()
         self.verify_email(new_user['id'], new_user['ver_code'], new_user['token'])
+        with open('ACCOUNTS/acounts.txt','a') as f:
+            f.write(f'{str(datetime.today())}\n')
+            f.write(f'[+] expires: {str(datetime.today() + timedelta(hours=24))}\n')
+            f.write(f"[+] email: {new_user['email']}\n")
+            f.write(f"[+] password: {new_user['password']}\n")
+            f.write('='*50)
         print(f"[+] Account generated: {new_user['email']} | {new_user['password']}")
-
+        
     def run(self):
         new_user = self.register()
         self.verify_email(new_user['id'], new_user['ver_code'], new_user['token'])
