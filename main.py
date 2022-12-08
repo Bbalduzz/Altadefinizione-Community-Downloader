@@ -2,6 +2,7 @@ import requests
 from random import choice
 from bs4 import BeautifulSoup
 import webbrowser
+import os
 
 class WebRequests():
     def __init__(self, token):
@@ -12,7 +13,18 @@ class WebRequests():
 
 class AltadefinizioneExploit:
     def __init__(self):
-        pass
+        self.updated_domain = self.new_domain()
+
+    def progress_bar(self, progress, total, film_name):
+        percent = 100 * (progress / float(total))
+        bar = '█' * int(percent) + '-' * (100 - int(percent))
+        print(f'\r[+] Downloading {film_name}... |{bar}| {percent:.2f}%', end='\r')
+
+    def new_domain(self):
+        r = requests.get('https://altadefinizione-nuovo.click/').content
+        soup = BeautifulSoup(r, 'html.parser')
+        domain = soup.select('h2 > a')[0].text.split('.')[-1]
+        return domain
 
     def yopmail_gen_ud(self):
         req = requests.get('https://yopmail.com/en/alternate-domains').content
@@ -22,12 +34,12 @@ class AltadefinizioneExploit:
         return email + choice(ud_domains)
 
     def verify_email(self, user_id, verification, token):
-        requests.get(f'https://altadefinizionecommunity.online/api/verify/email/{user_id}/{verification}', headers=WebRequests(token).headers)
+        requests.get(f'https://altadefinizionecommunity.{self.updated_domain}/api/verify/email/{user_id}/{verification}', headers=WebRequests(token).headers)
 
     def register(self):
         rand_pass = ''.join([choice('abcdefghijklmnopqrstuvwxyz0123456789%^*(-_=+)') for i in range(10)])
         rand_email = self.yopmail_gen_ud()
-        req = requests.post('https://altadefinizionecommunity.online/api/register', 
+        req = requests.post(f'https://altadefinizionecommunity.{self.updated_domain}/api/register', 
             json={"email":rand_email,"password":rand_pass,"password_confirmation":rand_pass,"fingerprint":1117459144040421,"selected_plan":1}
         ).json()
         try:
@@ -46,7 +58,7 @@ class AltadefinizioneExploit:
         film_url = input('Enter the Film URL:\n')
         film_name = film_url.split('/')[-1]
         film = requests.get(
-            f'https://altadefinizionecommunity.online/api/post/urls/stream/{film_name}',
+            f'https://altadefinizionecommunity.{self.updated_domain}/api/post/urls/stream/{film_name}',
             headers=WebRequests(token).headers,
         ).json()
 
@@ -63,13 +75,13 @@ class AltadefinizioneExploit:
                 choice = input('Chose the resolution u want to download(enter the nuber in square brackets):\n')
                 match choice:
                     case '1':
-                        self.download_film(urls[0], token)
+                        self.download_film(urls[0], token, film_name)
                     case '2':
-                        self.download_film(urls[1], token)
+                        self.download_film(urls[1], token, film_name)
                     case '3':
-                        self.download_film(urls[2], token)
+                        self.download_film(urls[2], token, film_name)
                     case '4':
-                        self.download_film(urls[3], token)
+                        self.download_film(urls[3], token, film_name)
                     case other:
                         print('enter a valid choice!')
             case 'w':
@@ -86,20 +98,32 @@ class AltadefinizioneExploit:
                     case other:
                         print('enter a valid choice!')
 
-    def download_film(self, url, token):
+    def download_film(self, url, token, film_name):
+        try: os.mkdir('FILMS')
+        except: pass
         r = requests.get(url, stream=True, headers=WebRequests(token).headers)
-        print('Downloading ...')
-        with open('film.mp4', 'wb') as f:
+        total_length = int(r.headers.get('content-length'))
+        dl = 0
+        self.progress_bar(0, total_length, film_name)
+        with open(f'FILMS/{film_name}.mp4', 'wb') as f:
             for chunk in r.iter_content(chunk_size = 1024*1024):
                 if chunk:
                     f.write(chunk)
-        print('Done')
+                    dl += len(chunk)
+                    self.progress_bar(dl, total_length, film_name)
+        print(f'\n {film_name} downloaded')
+
+    def generate_account(self): # just in case, it's useful to have
+        new_user = self.register()
+        self.verify_email(new_user['id'], new_user['ver_code'], new_user['token'])
+        print(f"[+] Account generated: {new_user['email']} | {new_user['password']}")
 
     def run(self):
         new_user = self.register()
         self.verify_email(new_user['id'], new_user['ver_code'], new_user['token'])
         self.get_film(new_user['token'])
 
-
-dl = AltadefinizioneExploit()
-dl.run()
+if __name__ == '__main__':
+    dl = AltadefinizioneExploit()
+    dl.run() # to download/watch a film
+    # dl.generate_account() # uncomment to generate an verified account
