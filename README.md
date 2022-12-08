@@ -4,6 +4,7 @@ Scarica o guarda film da altadefinizione community senza un account premium.
 ### 🧱 TODO
 - ~~add authomatic new domain adjustments (ez im just to lazy to do it)~~
 - ~~better ui for download~~
+- add support for series
 
 ## Features
 - **Download** every film in altadefinizionecommunty in the resolution that u prefer
