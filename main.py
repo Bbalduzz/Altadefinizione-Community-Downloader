@@ -1,4 +1,3 @@
-
 import requests
 from random import choice
 from bs4 import BeautifulSoup
@@ -6,6 +5,9 @@ import webbrowser
 import os, sys
 from datetime import datetime, timedelta
 from colorama import Fore
+if sys.platform == "win32":
+    from colorama import just_fix_windows_console
+    just_fix_windows_console()
 
 class WebRequests():
     def __init__(self, token):
