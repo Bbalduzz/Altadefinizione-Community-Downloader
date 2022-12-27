@@ -1,11 +1,13 @@
 ## Tools
 ### Account Generator
 La funzione `register()` registra un nuovo utente con credenziali random precedentemente generate. Questa funzione ritorna un `dict` con le seguenti informazioni:
-    1. `'token'` --> necessario per le richieste al sito
-    2. `'email'` 
-    3. `'ver_code'` --> codice per verificare il nuovo account
-    4. `'id'` --> id utente per verificare l'account
-    5. `'password'`
+
+1. `'token'` --> necessario per le richieste al sito
+2. `'email'` 
+3. `'ver_code'` --> codice per verificare il nuovo account
+4. `'id'` --> id utente per verificare l'account
+5. `'password'`
+
 Successivamente la funzione `verify_email()` si occupa di verificare il nuovo account. Questa funzione accetta 2 argomenti: `'id'` e `'ver_code'`.
 La funzione `generate_account()` serve per generare solamente un account random. Non viene usata in altre funzioni.
 ##### Esempio
