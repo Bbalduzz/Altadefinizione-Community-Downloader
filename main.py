@@ -5,9 +5,6 @@ import webbrowser
 import os, sys
 from datetime import datetime, timedelta
 from colorama import Fore
-if sys.platform == "win32":
-    from colorama import just_fix_windows_console
-    just_fix_windows_console()
 
 class WebRequests():
     def __init__(self, token):
@@ -19,6 +16,13 @@ class WebRequests():
 class AltadefinizioneExploit:
     def __init__(self):
         self.updated_domain = self.new_domain()
+        self.session = requests.Session()
+        new_user = self.register()
+        self.new_token = new_user['token']
+        self.new_ver_code = new_user['ver_code']
+        self.new_userid = new_user['id']
+        self.session.headers.update(WebRequests(self.new_token).headers)
+        self.verify_email(new_user['id'], new_user['ver_code'])
 
     def progress_bar(self, progress, total, film_name):
         percent = 100 * (progress / float(total))
@@ -34,8 +38,8 @@ class AltadefinizioneExploit:
     def email_ud(self):
         email = ''.join([choice('abcdefghijklmnopqrstuvwxyz0123456789%') for _ in range(10)])
         return f"{email}@{''.join([choice('abcdefghijklmnopqrstuvwxyz') for _ in range(4)])}.{''.join([choice('abcdefghijklmnopqrstuvwxyz') for _ in range(2)])}"
-    def verify_email(self, user_id, verification, token):
-        requests.get(f'https://altadefinizionecommunity.{self.updated_domain}/api/verify/email/{user_id}/{verification}', headers=WebRequests(token).headers)
+    def verify_email(self, user_id, verification):
+        self.session.get(f'https://altadefinizionecommunity.{self.updated_domain}/api/verify/email/{user_id}/{verification}')
 
     def register(self):
         rand_pass = ''.join([choice('abcdefghijklmnopqrstuvwxyz0123456789%^*(-_=+)') for _ in range(10)])
@@ -55,15 +59,25 @@ class AltadefinizioneExploit:
             print('Something went wrong. The error thrown is', e)
             print(req)
 
-    def check_media(self, token, url):
-        r = requests.get(f'https://altadefinizione-originale.{self.updated_domain}/api/posts/slug/{url.split("/")[-1]}', headers=WebRequests(token).headers).json()
+    def search_content(self, query):
+        slugs = []
+        types = []
+        results = self.session.get(f'https://altadefinizionecommunity.online/api/autocomplete?search={query}').json()
+        for i,r in enumerate(results['results']):
+            print(f"    {i}. [{Fore.WHITE}{r['type']}{Fore.RESET}] {r['text']} {Fore.CYAN}({Fore.RESET}{r['final_quality']}{Fore.CYAN}){Fore.RESET}")
+            slugs.append(r['slug'])
+            types.append(r['type'])
+        c = int(input(f'{Fore.YELLOW}●{Fore.RESET} Enter ID: '))
+        return slugs[c],types[c]
+
+    def check_media(self, url):
+        r = self.session.get(f'https://altadefinizione-originale.{self.updated_domain}/api/posts/slug/{url.split("/")[-1]}').json()
         return r['post']['type']
             
-    def get_serie(self, token, serie_url):
+    def get_serie(self, serie_url):
         serie_name = serie_url.split('?')[0].removeprefix(f'https://altadefinizionecommunity.{self.updated_domain}/p/')
-        serie = requests.get(
+        serie = self.session.get(
             f'https://altadefinizionecommunity.{self.updated_domain}/api/posts/seasons/{serie_name}',
-            headers = WebRequests(token).headers,
         ).json()
         seasons = [(season['season_label'], len(season['episodes'])) for season in serie['seasons']]
         all_urls = []
@@ -73,14 +87,14 @@ class AltadefinizioneExploit:
             for episode in range(season[1]):
                 print(f'    ⇢ {Fore.WHITE}Episode{Fore.RESET} {episode+1}')
                 ep = []
-                r = requests.get(f'https://altadefinizionecommunity.online/api/post/urls/stream/{serie_url.split("/")[-1]}/{n}/{episode}', headers=WebRequests(token).headers).json()
+                r = self.session.get(f'https://altadefinizionecommunity.online/api/post/urls/stream/{serie_url.split("/")[-1]}/{n}/{episode}').json()
                 for stream in r['streams']:
                     ep.append(stream['url'])
                     print(f"        {Fore.WHITE}Quality{Fore.RESET}: {stream['resolution']['name']}, {stream['download_size']}")
                 urls.append(ep)
             all_urls.append(urls)
         to_download = input(f'{Fore.YELLOW}●{Fore.RESET} Enter the season, episode and quality u want to download {Fore.WHITE}(format: 1-1-1){Fore.RESET}: ').split('-')
-        wod = input(f'{Fore.YELLOW}●{Fore.RESET} Watch online or Download? [{Fore.GREEN}W{Fore.RESET} / {Fore.GREEN}D{Fore.RESET} / {Fore.MAGENTA}d-all{Fore.RESET} {Fore.WHITE}to download all episodes of all series{Fore.RESET}]: \n').lower()
+        wod = input(f'{Fore.YELLOW}●{Fore.RESET} Watch online or Download? [{Fore.GREEN}W{Fore.RESET} / {Fore.GREEN}D{Fore.RESET} / {Fore.MAGENTA}d-all{Fore.RESET} {Fore.WHITE}to download all episodes of all series{Fore.RESET}]: ').lower()
         match wod:
             case 'w':
                 webbrowser.open(all_urls[int(to_download[0])-1][int(to_download[1])-1][int(to_download[2])-1])
@@ -92,11 +106,11 @@ class AltadefinizioneExploit:
             case other:
                 print('not a valid option')
 
-    def download_serie(self, urls, token, serie_name):
+    def download_serie(self, urls, serie_name):
         try: os.mkdir('SERIES')
         except: pass
         for n,url in enumerate(urls):
-            r = requests.get(url, stream=True, headers=WebRequests(token).headers)
+            r = self.session.get(url, stream=True)
             total_length = int(r.headers.get('content-length'))
             dl = 0
             self.progress_bar(dl, total_length, serie_name)
@@ -108,11 +122,10 @@ class AltadefinizioneExploit:
                         self.progress_bar(dl, total_length, serie_name)
         print(f'\n {serie_name} downloaded')
 
-    def get_film(self, token, film_url):
+    def get_film(self, film_url):
         film_name = film_url.split('/')[-1]
-        film = requests.get(
+        film = self.session.get(
             f'https://altadefinizionecommunity.{self.updated_domain}/api/post/urls/stream/{film_name}',
-            headers=WebRequests(token).headers,
         ).json()
 
         print(f'== {Fore.GREEN}Options{Fore.RESET} ==\n')
@@ -122,23 +135,23 @@ class AltadefinizioneExploit:
             size = stream['download_size']
             res = stream['resolution']['name']
             print(f'{Fore.GREEN}[{Fore.RESET}{n+1}{Fore.GREEN}]{Fore.RESET} Quality: {res}, {size}')
-        wod = input(f'\nWatch online or Download? [{Fore.GREEN}W{Fore.RESET} / {Fore.GREEN}D{Fore.RESET}]: \n').lower()
+        wod = input(f'\nWatch online or Download? [{Fore.GREEN}W{Fore.RESET} / {Fore.GREEN}D{Fore.RESET}]: ').lower()
         match wod:
             case 'd':
-                choice = input(f'{Fore.YELLOW}●{Fore.RESET} Chose the resolution u want to download (enter the nuber in square brackets):\n')
+                choice = input(f'{Fore.YELLOW}●{Fore.RESET} Chose the resolution u want to download (enter the nuber in square brackets): ')
                 match choice:
                     case '1':
-                        self.download_film(urls[0], token, film_name)
+                        self.download_film(urls[0], film_name)
                     case '2':
-                        self.download_film(urls[1], token, film_name)
+                        self.download_film(urls[1], film_name)
                     case '3':
-                        self.download_film(urls[2], token, film_name)
+                        self.download_film(urls[2], film_name)
                     case '4':
-                        self.download_film(urls[3], token, film_name)
+                        self.download_film(urls[3], film_name)
                     case other:
                         print('enter a valid choice!')
             case 'w':
-                choice = input(f'{Fore.YELLOW}●{Fore.RESET}Chose the resolution you prefer to watch  (enter the nuber in square brackets):\n')
+                choice = input(f'{Fore.YELLOW}●{Fore.RESET} Chose the resolution you prefer to watch  (enter the nuber in square brackets): ')
                 match choice:
                     case '1':
                         webbrowser.open(urls[0], new=1, autoraise=True)
@@ -151,10 +164,10 @@ class AltadefinizioneExploit:
                     case other:
                         print('enter a valid choice!')
 
-    def download_film(self, url, token, film_name):
+    def download_film(self, url, film_name):
         try: os.mkdir('FILMS')
         except: pass
-        r = requests.get(url, stream=True, headers=WebRequests(token).headers)
+        r = self.session.get(url, stream=True)
         total_length = int(r.headers.get('content-length'))
         dl = 0
         self.progress_bar(0, total_length, film_name)
@@ -166,7 +179,7 @@ class AltadefinizioneExploit:
                     self.progress_bar(dl, total_length, film_name)
         print(f'\n {film_name} downloaded')
 
-    def generate_account(self): # just in case, it's useful to have
+    def generate_account(self):
         try: os.mkdir('ACCOUNTS')
         except: pass
         def gen():
@@ -184,12 +197,10 @@ class AltadefinizioneExploit:
         else: gen()
         
     def download(self, url):
-        new_user = self.register()
-        self.verify_email(new_user['id'], new_user['ver_code'], new_user['token'])
-        if self.check_media(new_user['token'],url) == 'movie':
-            self.get_film(new_user['token'], url)
+        if self.check_media(url) == 'movie':
+            self.get_film(url)
         else:
-            self.get_serie(new_user['token'], url)
+            self.get_serie(url)
 
 if __name__ == '__main__':
     dl = AltadefinizioneExploit()
