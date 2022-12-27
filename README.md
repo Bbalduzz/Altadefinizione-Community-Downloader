@@ -1,6 +1,8 @@
 # Altadefinizione-Community-Downloader
 Scarica o guarda film da altadefinizione community senza un account premium.
 
+### [Documentation](https://github.com/Bbalduzz/Altadefinizione-Community-Downloader/blob/main/utils/docs.md)
+
 ### 🧱 TODO
 - ~~add authomatic new domain adjustments (ez im just to lazy to do it)~~
 - ~~better ui for download~~
