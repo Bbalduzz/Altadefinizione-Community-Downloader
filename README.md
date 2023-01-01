@@ -1,3 +1,8 @@
+### IMPORTANT
+> 2/01/2023: REPO IS READ ONLY SINCE NOW
+
+As for now this repo is read only sice the team of the site that was needed to make all this work contacted me ([issue #2](https://github.com/Bbalduzz/Nexploix/issues/2)) and changed a key feature in the new user authentication. I'm working on a new method but for now this script won't work. 
+
 # Altadefinizione-Community-Downloader
 Scarica o guarda film da altadefinizione community senza un account premium.
 
